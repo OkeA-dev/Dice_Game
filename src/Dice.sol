@@ -28,7 +28,8 @@ pragma solidity ^0.8.20;
  * @dev Implement Chainlink VRFv2
  * 
  */
-
+import {VRFConsumerBaseV2Plus} from "@chainlink/contracts@1.1.1/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from "@chainlink/contracts@1.1.1/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 contract DiceGame {
 
@@ -76,6 +77,7 @@ contract DiceGame {
         if (s_stakeStatus != StakeStatus.YES) {
             revert DiceGame__NoStakeRecorded();
         }
+
     }
     function winnerWithdrawal() external {}
     function OwnerWithdrawal() external {}
