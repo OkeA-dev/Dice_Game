@@ -28,10 +28,11 @@ pragma solidity ^0.8.20;
  * @dev Implement Chainlink VRFv2
  * 
  */
-import {VRFConsumerBaseV2Plus} from "@chainlink/contracts@1.1.1/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import {VRFV2PlusClient} from "@chainlink/contracts@1.1.1/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import {VRFCoordinatorV2Interface} from "@chainlink/contracts/src/v0.8/vrf/interfaces/VRFCoordinatorV2Interface.sol";
+import {VRFConsumerBaseV2Plus} from "@chainlink/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
-contract DiceGame {
+contract DiceGame is VRFConsumerBaseV2Plus{
 
     error DiceGame__NotEnoughEthSent(uint256 leastAmount);
     error DiceGame__NoStakeRecorded();
@@ -42,14 +43,36 @@ contract DiceGame {
         NO
     }
 
-    uint256 private immutable i_leastAmount;
+    uint16 private constant REQUEST_CONFIRMATION = 3;
+    uint32 private constant NUMWORDS =  1; 
+
+    uint256 private immutable i_leastAmount; 
+    address private immutable i_vrfCoordinatorAddr;
+    VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
+    bytes32 private immutable i_keyHash;
+    uint64 private immutable i_subscriptionId;
+    uint32 private immutable i_callbackGasLimit;
+    uint256 private  s_predictedNum;
     StakeStatus private s_stakeStatus;
+    address private s_recentPlayer;
     mapping (address => uint256) private s_players;
+    mapping (address => uint256) private s_results;
 
     event CurrentPlayer(address indexed player, uint256 amoutStaked);
 
-    constructor(uint256 _leastAmount) {
+    constructor(
+        uint256 _leastAmount,
+        address _vrfCoordinator,
+        bytes32 _keyHash,
+        uint64 _subscriptionId,
+        uint32 _callbackGasLimit
+
+    ) VRFConsumerBaseV2Plus(i_vrfCoordinatorAddr) {
         i_leastAmount = _leastAmount;
+        i_vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
+        i_keyHash = _keyHash;
+        i_subscriptionId = _subscriptionId;
+        i_callbackGasLimit = _callbackGasLimit;
     }
     function stakeBet() external payable {
         if(msg.value < i_leastAmount) {
@@ -73,12 +96,34 @@ contract DiceGame {
             revert DiceGame__TransferFailed();
         }
     }
-    function playDice() external {
+    function playDice(uint16 _predictedNum) external returns (uint256 requestId) {
         if (s_stakeStatus != StakeStatus.YES) {
             revert DiceGame__NoStakeRecorded();
         }
+        s_stakeStatus = StakeStatus.NO;
+        s_recentPlayer = msg.sender;
+        s_predictedNum = _predictedNum;
+        requestId = i_vrfCoordinator.requestRandomWords({
+                keyHash: i_keyHash,
+                subId: i_subscriptionId,
+                minimumRequestConfirmations: REQUEST_CONFIRMATION,
+                callbackGasLimit: i_callbackGasLimit,
+                numWords: NUMWORDS
+        });
 
     }
-    function winnerWithdrawal() external {}
+
+    function fulfillRandomWords(uint256 /*requestId*/, uint256[] calldata randomWords) internal override {
+        uint256 d6Value = (randomWords[0] % 6) + 1;
+        
+        if (s_predictedNum == d6Value) {
+            uint256 amountWon = s_players[s_recentPlayer];
+            (bool success,) = s_recentPlayer.call{value: amountWon * 2}("");
+            if(!success) {
+                revert DiceGame__TransferFailed();
+            }
+        } 
+    }
+
     function OwnerWithdrawal() external {}
 }
