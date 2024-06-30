@@ -19,7 +19,7 @@
 // private
 // view & pure functions
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.19;
 
 /**
  * @title A simple Dice_game Contract
@@ -47,7 +47,6 @@ contract DiceGame is VRFConsumerBaseV2Plus{
     uint32 private constant NUMWORDS =  1; 
 
     uint256 private immutable i_leastAmount; 
-    address private immutable i_vrfCoordinatorAddr;
     VRFCoordinatorV2Interface private immutable i_vrfCoordinator;
     bytes32 private immutable i_keyHash;
     uint64 private immutable i_subscriptionId;
@@ -67,7 +66,7 @@ contract DiceGame is VRFConsumerBaseV2Plus{
         uint64 _subscriptionId,
         uint32 _callbackGasLimit
 
-    ) VRFConsumerBaseV2Plus(i_vrfCoordinatorAddr) {
+    ) VRFConsumerBaseV2Plus(_vrfCoordinator) {
         i_leastAmount = _leastAmount;
         i_vrfCoordinator = VRFCoordinatorV2Interface(_vrfCoordinator);
         i_keyHash = _keyHash;
