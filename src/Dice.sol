@@ -54,7 +54,7 @@ contract DiceGame is VRFConsumerBaseV2Plus{
     uint256 private  s_predictedNum;
     StakeStatus private s_stakeStatus;
     address private s_recentPlayer;
-    mapping (address => uint256) private s_players;
+    mapping (address => uint256) private s_players; //players address to their balance
     mapping (address => uint256) private s_results;
 
     event CurrentPlayer(address indexed player, uint256 amoutStaked);
@@ -124,5 +124,7 @@ contract DiceGame is VRFConsumerBaseV2Plus{
         } 
     }
 
-    function OwnerWithdrawal() external {}
+    function getPlayerBalance(address _player) external view returns (uint256) {
+        return s_players[_player];
+    }
 }
