@@ -65,5 +65,23 @@ contract TestDiceGame is Test {
         console.log(leastAmount);
         console.log(diceGame.getPlayerBalance(PLAYER));
     }
+
+    function testDiceGameNotPlayerTryUnstake() public {
+        vm.prank(PLAYER);
+        vm.expectRevert(DiceGame.DiceGame__NoStakeRecorded.selector);
+        diceGame.unstakeBet();
+    }
+
+    function testDiceGamePlayerUnstakeBalanceReturnToZero() public {
+        vm.startPrank(PLAYER);
+        diceGame.stakeBet{value: leastAmount}();
+        diceGame.unstakeBet();
+        vm.stopPrank();
+
+        assertEq(diceGame.getPlayerBalance( PLAYER), 0);
+        
+    }
+
+    
     
 }

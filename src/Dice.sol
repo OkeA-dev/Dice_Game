@@ -39,8 +39,8 @@ contract DiceGame is VRFConsumerBaseV2Plus{
     error DiceGame__TransferFailed();
 
     enum StakeStatus {
-        YES,
-        NO
+        NO,
+        YES
     }
 
     uint16 private constant REQUEST_CONFIRMATION = 3;
