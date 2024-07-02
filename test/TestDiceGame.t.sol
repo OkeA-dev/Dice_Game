@@ -82,6 +82,11 @@ contract TestDiceGame is Test {
         
     }
 
-    
+    function testDiceGamePlayerDice() public {
+        uint16 predictValue = 5;
+        vm.startPrank(PLAYER);
+        diceGame.stakeBet{value: leastAmount}();
+        diceGame.playDice(predictValue);
+    }
     
 }
